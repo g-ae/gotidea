@@ -1,0 +1,47 @@
+<resources>
+    <string name="app_name">GotIdea</string>
+    <string name="saveFileName" translatable="false">data.json</string>
+    <string name="version" translatable="false">0.0</string>
+
+    <string name="btnGetStarted">Get started !</string>
+    <!-- Tasks -->
+    <string name="newTask">New task (click to edit)</string>
+    <string name="task_error_cantsave">Couldn\'t save task. Check console.</string>
+    <string name="taskNoSaveTitle">Task</string>
+    <string name="taskNoSaveMessage">You have unsaved changes. Do you want to save them ?</string>
+    <string name="save">Save</string>
+    <string name="taskSavedChanges">Task saved !</string>
+    <string name="taskDiscardedChanges">Discarded changes.</string>
+    <string name="discard">Discard</string>
+    <string name="cancel">Cancel</string>
+    <string name="savechanges">Save changes</string>
+    <string name="delete">Delete</string>
+    <string name="taskDeleteTitle">Delete task</string>
+    <string name="taskDeleteMessage">Are you sure that you want to delete this task ?</string>
+    <string name="taskDeleted">Task deleted.</string>
+    <string name="task_not_found">Task not found.</string>
+    <string name="no_tasks">No tasks were found. Get started by clicking the "+" button on the bottom right of your screen !</string>
+    <!-- Login -->
+    <string name="continueWithoutGoogle">Continue without logging to Google\n(Your data will be saved on your device)</string>
+    <string name="loginWithGoogleNotAvailable">Signing with Google is not available for now.</string>
+    <string name="loginWithoutGoogle">All files will be saved in your device for now.</string>
+    <string name="valueTooLong">One of the values is too long.</string>
+    <string name="settings">Settings</string>
+    <string name="archive">Archive</string>
+    <string name="archived">The task is now archived.</string>
+    <string name="undo">UNDO</string>
+    <string name="task_unarchive">The task has been unarchived.</string>
+    <string name="delete_all_data">Delete all data</string>
+    <string name="deleteAllDataMessage">Are you sure you want to delete everything ? This action is not reversible !</string>
+    <string name="deletedAll">All data has been deleted.</string>
+    <string name="no_archived_tasks">There aren\'t any archived tasks.</string>
+    <string name="task_restored">Task has been restored</string>
+    <string name="taskNoSaveMessageArchived">You have unsaved chanves. Do you want to save them then archive the task ?</string>
+    <string name="taskSavedChangesAndArchived">Task saved and archived.</string>
+    <string name="taskDiscardedChangesAndArchived">Changes discarded and task archived.</string>
+    <string name="characters">characters</string>
+    <string name="max_title_length">Max title length</string>
+    <string name="max_description_length">Max description length</string>
+    <string name="taskTitleTooLong">The title you wrote is too long !</string>
+    <string name="taskDescriptionTooLong">The description you wrote is too long !</string>
+</resources>

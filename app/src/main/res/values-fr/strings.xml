@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GotIdea</string>
+    <string name="btnGetStarted">Commencer</string>
+
+    <!-- Tasks -->
+    <string name="newTask">Nouvelle tâche (cliquez pour éditer)</string>
+    <!-- Login -->
+    <string name="continueWithoutGoogle">Continuer sans se connecter à Google\n(Vos données seront sauvegardées dans votre appareil)</string>
+    <string name="loginWithGoogleNotAvailable">La connexion avec Google n\'est pas disponible pour l\'instant</string>
+    <string name="loginWithoutGoogle">Toutes les données seront sauvegardées dans votre appareil.</string>
+    <string name="taskNoSaveTitle">Tâche</string>
+    <string name="taskNoSaveMessage">Vous avez des modifications non sauvegardées. Veux-tu sauvegarder ?</string>
+    <string name="save">Sauvegarder</string>
+    <string name="taskSavedChanges">Tâche sauvegardée !</string>
+    <string name="taskDiscardedChanges">Modifications oubliées</string>
+    <string name="discard">Oublier</string>
+    <string name="cancel">Annuler</string>
+    <string name="savechanges">Sauvegarder modifications</string>
+    <string name="delete">Supprimer</string>
+    <string name="task_error_cantsave">La tâche n\'a pas pu être sauvegardée. Vérifiez la console.</string>
+    <string name="taskDeleteTitle">Supprimer la tâche</string>
+    <string name="taskDeleteMessage">Êtes-vous sur de vouloir supprimer la tâche ?</string>
+    <string name="taskDeleted">Tâche supprimée.</string>
+    <string name="task_not_found">Tâche pas trouvée.</string>
+    <string name="no_tasks">Aucune tâche trouvée. Commencez par en créer une avec le \"+\" en bas à droite !</string>
+    <string name="valueTooLong">Une des valeurs est trop grande.</string>
+    <string name="settings">Paramètres</string>
+    <string name="archive">Archive</string>
+    <string name="archived">La tâche est maintenant archivée.</string>
+    <string name="undo">DÉFAIRE</string>
+    <string name="task_unarchive">La tâche a été désarchivée.</string>
+    <string name="delete_all_data">Supprimer toutes les données</string>
+    <string name="deleteAllDataMessage">Êtes-vous sur de vouloir supprimer toutes les données ? Cette action est irréversible.</string>
+    <string name="deletedAll">Toutes les données ont été supprimées.</string>
+    <string name="no_archived_tasks">Vous n\'avez aucune tâche archivée.</string>
+    <string name="task_restored">La tâche a été restaurée.</string>
+    <string name="taskNoSaveMessageArchived">Vous avez des modifications non sauvegardées. Voulez-vous les sauvegarder avant d\'archiver la tâche ?</string>
+    <string name="taskSavedChangesAndArchived">Données sauvegardées et archivées.</string>
+    <string name="taskDiscardedChangesAndArchived">Modifications oubliées et tâche archivée.</string>
+    <string name="characters">charactères</string>
+    <string name="max_title_length">Longueur maximale du titre</string>
+    <string name="max_description_length">Longueur maximale de la description</string>
+</resources>
