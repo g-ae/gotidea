@@ -44,4 +44,9 @@
     <string name="max_description_length">Max description length</string>
     <string name="taskTitleTooLong">The title you wrote is too long !</string>
     <string name="taskDescriptionTooLong">The description you wrote is too long !</string>
+    <string name="settings_connectedAs">Connected as</string>
+    <string name="import_data">You have data available to restore from your Google Drive. Do you want to restore it ?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="please_wait">Please wait. This may take a moment.</string>
 </resources>

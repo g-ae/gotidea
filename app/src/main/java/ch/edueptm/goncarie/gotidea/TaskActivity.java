@@ -18,6 +18,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 public class TaskActivity extends AppCompatActivity {
+    // TODO on save button click, disable it because the task's saved
     public static String INTENT_EXTRA_ISARCHIVED = "isarchived";
 
     String id;
@@ -34,8 +35,10 @@ public class TaskActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task_page);
+
         // Get intent extra (isarchived), if the task is archived, the task can't be edited.
-        if (getIntent().hasExtra(INTENT_EXTRA_ISARCHIVED)) extra_isarchived = getIntent().getBooleanExtra(INTENT_EXTRA_ISARCHIVED, true);
+        if (getIntent().hasExtra(INTENT_EXTRA_ISARCHIVED))
+            extra_isarchived = getIntent().getBooleanExtra(INTENT_EXTRA_ISARCHIVED, true);
 
         try {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -88,7 +91,7 @@ public class TaskActivity extends AppCompatActivity {
             });
         }
 
-        id = getIntent().getStringExtra("taskId");
+        id = getIntent().getStringExtra(GITask.INTENT_EXTRA_TASKID);
         if (id.equals("")) {
             Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show();
             finish();

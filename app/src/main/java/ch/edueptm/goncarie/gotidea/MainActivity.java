@@ -5,7 +5,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -16,18 +15,16 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.DriveScopes;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.Collections;
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
     DriveConnector driveConnector;
@@ -36,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        ((FloatingActionButton)findViewById(R.id.fab)).setImageDrawable(getDrawable(R.drawable.ic_action_content_new));
     }
     /**
      * On add task button click
@@ -60,17 +57,14 @@ public class MainActivity extends AppCompatActivity {
             int non_archived_tasks = 0;
             for (int i = 0; i < tasks.length(); i++) {
                 GITask t = new GITask(tasks.getJSONObject(i));
-                if (!t.getArchived()) {
+                if (!t.isArchived()) {
                     non_archived_tasks++;
                     View child = getLayoutInflater().inflate(R.layout.task_row, this.findViewById(R.id.main_task_list), false);
                     CheckBox cb = child.findViewById(R.id.cbComplete);
                     TextView tv = child.findViewById(R.id.task_title);
                     tv.setText(t.getTitle());
                     cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                        if (isChecked) {
-                            // CLICK SUR CHECKBOX
-                            archiveTask(t.getId());
-                        }
+                        if (isChecked) archiveTask(t.getId());
                     });
 
                     child.setOnClickListener(v -> {
@@ -98,25 +92,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        ((FloatingActionButton)findViewById(R.id.fab)).setImageDrawable(getDrawable(R.drawable.ic_action_content_new));
-
         if (!JSONConstructor.saveFileExists(this)) {
             // save file doesn't exist so go to LoginActivity
             startActivity(new Intent(this, LoginActivity.class));
-        } else {
-            if (DriveConnector.isConnectedToDrive(this) && driveConnector == null) {
-                GoogleAccountCredential credential =
-                    GoogleAccountCredential.usingOAuth2(
-                        this, Collections.singleton(DriveScopes.DRIVE_FILE));
-                Drive googleDriveService = new Drive.Builder(
-                    AndroidHttp.newCompatibleTransport(),
-                    new GsonFactory(),
-                    credential
-                ).setApplicationName(getString(R.string.app_name))
-                    .build();
-                DriveConnector.setInstance(googleDriveService, this);
-                DriveConnector.getInstance().connect(this);
-            }
+        } else if (driveConnector == null && DriveConnector.isConnectedToDrive(this)) {
+            DriveConnector.setInstance(this, GoogleSignIn.getLastSignedInAccount(this));
         }
 
         // add tasks to scrollview
@@ -155,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
             .setAction(getString(R.string.undo), v -> {
                 // find task and set it to not archived
                 GITask t = GITask.findFromId(taskId, this);
-                t.setArchived(false);
+                t.setIsArchived(false);
 
                 // saves the undo and updates the list
                 JSONConstructor.saveTask(t, this);
@@ -168,12 +148,6 @@ public class MainActivity extends AppCompatActivity {
         updateLayout();
     }
 
-    /**
-     * on return of the task activity, if they archived a task, this method will create a snackbar to undo their action
-     * @param requestCode
-     * @param resultCode
-     * @param data
-     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -186,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void archiveTask(String id) {
         GITask t = GITask.findFromId(id, this);
-        t.setArchived(true);
+        t.setIsArchived(true);
         JSONConstructor.saveTask(t, this);
         updateLayout();
         createSnackbarArchive(t.getId());

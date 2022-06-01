@@ -6,6 +6,9 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import com.google.api.client.util.DateTime;
+import com.google.api.services.drive.Drive;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,11 +20,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.time.Clock;
+import java.time.ZonedDateTime;
 
 /**
  * JSONConstructor is a static class used to handle the interaction between the application and the JSON save file.
  */
 public class JSONConstructor {
+    public static final String KEY_ARRAY_TASKS = "tasks";
+    public static final String KEY_LAST_UPDATE = "lastUpdate";
     /**
      * This method checaks if the save file exists. (name of file: R.string.saveFileName)
      * @param context activity context
@@ -59,6 +66,8 @@ public class JSONConstructor {
             OutputStreamWriter osw = new OutputStreamWriter(context.openFileOutput(context.getString(R.string.saveFileName), Context.MODE_PRIVATE));
             osw.write(data);
             osw.close();
+
+            if (DriveConnector.isConnectedToDrive(context)) DriveConnector.getInstance().saveFile();
         }
         catch (IOException e) {
             Log.e("ERROR", "File write failed: " + e.getMessage());
@@ -79,18 +88,7 @@ public class JSONConstructor {
 
             // if file exists, read it
             if ( inputStream != null ) {
-                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                String receiveString;
-                StringBuilder stringBuilder = new StringBuilder();
-
-                while ( (receiveString = bufferedReader.readLine()) != null ) {
-                    stringBuilder.append("\n").append(receiveString);
-                }
-                bufferedReader.close();
-                inputStreamReader.close();
-                inputStream.close();
-                ret = stringBuilder.toString();
+                ret = readInputStream(inputStream);
             }
         }
         catch (FileNotFoundException e) {
@@ -104,8 +102,7 @@ public class JSONConstructor {
      * Builds a JSONObject ready to be inserted in the savefile.
      * example of the JSONObject:
      * {
-     *     "version": "v",
-     *     "created": "date",
+     *     "lastUpdate": "datetime",
      *     "connectedToDrive": "true/false",
      *     "tasks": [
      *         // array of tasks
@@ -136,12 +133,12 @@ public class JSONConstructor {
             DriveConnector drive = DriveConnector.getInstance();
             boolean driveConnected = drive != null;
 
-            json.put("version", context.getString(R.string.version));
+            json.put(KEY_LAST_UPDATE, ZonedDateTime.now(Clock.systemUTC()).toString());
             // if an account is available in the DriveConnector, set connectedToDrive to true and set account object
             // else it's false
             json.put(DriveConnector.JSON_KEY_CONNECTED_DRIVE, driveConnected);
             json.put("account", driveConnected ? drive.getAccountAsJSON() : null);
-            json.put("tasks", jsontasks);
+            json.put(KEY_ARRAY_TASKS, jsontasks);
         } catch(JSONException e) {
             Log.e("ERROR", "JSON file creation failed: " + e.getMessage());
         }
@@ -155,7 +152,7 @@ public class JSONConstructor {
      */
     public static void changeTask(int index, GITask task, Context context) {
         try {
-        JSONArray tasks = new JSONObject(readFromFile(context.getString(R.string.saveFileName), context)).getJSONArray("tasks");
+        JSONArray tasks = new JSONObject(readFromFile(context.getString(R.string.saveFileName), context)).getJSONArray(KEY_ARRAY_TASKS);
         JSONArray tasksnew = new JSONArray();
         for (int i = 0; i < tasks.length(); i++) {
             if (i == index) tasksnew.put(task.getJSON());
@@ -176,13 +173,13 @@ public class JSONConstructor {
     public static void saveTask(GITask task, Context context) {
         int index = -1;
         try {
-            JSONArray array = new JSONObject(readFromFile(context.getString(R.string.saveFileName), context)).getJSONArray("tasks");
+            JSONArray array = new JSONObject(readFromFile(context.getString(R.string.saveFileName), context)).getJSONArray(KEY_ARRAY_TASKS);
             for (int i = 0; i < array.length(); i++) {
                 if (array.getJSONObject(i).getString("id").equals(task.getId())) index = i;
             }
             if (index == -1) {
                 try {
-                    JSONArray tasks = new JSONObject(JSONConstructor.readFromFile(context.getString(R.string.saveFileName), context)).getJSONArray("tasks");
+                    JSONArray tasks = new JSONObject(JSONConstructor.readFromFile(context.getString(R.string.saveFileName), context)).getJSONArray(KEY_ARRAY_TASKS);
                     tasks.put(GITask.getBaseTask(context).getJSON());
                     JSONConstructor.writeToFile(JSONConstructor.createData(tasks, context).toString(), context);
                 } catch(JSONException e) {
@@ -206,7 +203,7 @@ public class JSONConstructor {
     public static void deleteTask(String id, Context context) {
         try {
             JSONObject json = new JSONObject(JSONConstructor.readFromFile(context.getString(R.string.saveFileName), context));
-            JSONArray array = json.getJSONArray("tasks");
+            JSONArray array = json.getJSONArray(KEY_ARRAY_TASKS);
             int indexToErase = -1;
             for(int i = 0; i < array.length(); i++) {
                 if (array.getJSONObject(i).getString("id").equals(id)) {
@@ -215,7 +212,7 @@ public class JSONConstructor {
             }
             if (indexToErase != -1)array.remove(indexToErase);
             else Toast.makeText(context, context.getString(R.string.task_not_found), Toast.LENGTH_SHORT).show();
-            json.put("tasks", array);
+            json.put(KEY_ARRAY_TASKS, array);
             JSONConstructor.writeToFile(json.toString(), context);
         } catch(JSONException e) {
             Log.e("JSONConnector", "Couldn't delete task");
@@ -230,9 +227,9 @@ public class JSONConstructor {
     public static boolean checkIsSaveFileUsable(Context context) {
         try {
             JSONObject json = new JSONObject(JSONConstructor.readFromFile(context.getString(R.string.saveFileName), context));
-            json.getString("version");
+            json.getString(KEY_LAST_UPDATE);
             json.getString("date");
-            json.getJSONArray("tasks");
+            json.getJSONArray(KEY_ARRAY_TASKS);
             return true;
         } catch (JSONException e) {
             Log.e("JSONConnector", "Coudln't check use of file" + e.getMessage());
@@ -246,14 +243,13 @@ public class JSONConstructor {
      */
     public static void deleteAllData(Context context) {
         DriveConnector driveConnector = DriveConnector.getInstance();
+        if (DriveConnector.isConnectedToDrive(context)) driveConnector.deleteAll();
         try {
             File file = new File(context.getFilesDir(), context.getString(R.string.saveFileName));
             file.delete();
         } catch (Exception e) {
             Log.e("ERROR", e.getMessage());
         }
-        // TODO: delete file from Drive
-        if (driveConnector != null) driveConnector.deleteAll();
     }
 
     public static Object getAttribute(Context context, String attribute) {
@@ -262,6 +258,25 @@ public class JSONConstructor {
             return json.get(attribute);
         } catch (JSONException e) {
             Log.e("JSONConnector", "Couldn't get attribute");
+            return null;
+        }
+    }
+    public static String readInputStream(InputStream is) {
+        try {
+            InputStreamReader inputStreamReader = new InputStreamReader(is);
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+            String receiveString;
+            StringBuilder stringBuilder = new StringBuilder();
+
+            while ((receiveString = bufferedReader.readLine()) != null) {
+                stringBuilder.append("\n").append(receiveString);
+            }
+            bufferedReader.close();
+            inputStreamReader.close();
+            is.close();
+            return stringBuilder.toString();
+        } catch(IOException e) {
+            Log.e("JSONConnector", "Couldn't read input stream");
             return null;
         }
     }

@@ -1,25 +1,26 @@
 package ch.edueptm.goncarie.gotidea;
 
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.Scope;
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 
-import java.util.Collections;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class LoginActivity extends AppCompatActivity {
     @Override
@@ -50,7 +51,6 @@ public class LoginActivity extends AppCompatActivity {
         signInWithGoogle();
     }
     public void signInWithGoogle() {
-        Log.i("LoginActivity", "signInWithGoogle");
         GoogleSignInOptions signInOptions =
                 new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                         .requestEmail()
@@ -67,25 +67,44 @@ public class LoginActivity extends AppCompatActivity {
     private void handleSignInResult(Intent result) {
         GoogleSignIn.getSignedInAccountFromIntent(result)
             .addOnSuccessListener(googleAccount -> {
-                Log.d("DriveConnector", "Signed in as " + googleAccount.getEmail());
-
                 // Use the authenticated account to sign in to the Drive service.
-                GoogleAccountCredential credential =
-                    GoogleAccountCredential.usingOAuth2(
-                        this, Collections.singleton(DriveScopes.DRIVE_FILE));
-                credential.setSelectedAccount(googleAccount.getAccount());
-                Drive googleDriveService = new Drive.Builder(
-                    AndroidHttp.newCompatibleTransport(),
-                    new GsonFactory(),
-                    credential
-                ).setApplicationName(getString(R.string.app_name))
-                    .build();
+                DriveConnector.setInstance(this, googleAccount);
 
-                // The DriveConnector class encapsulates all REST API and SAF functionality.
-                DriveConnector driveConnector = DriveConnector.setInstance(googleDriveService, this);
-                driveConnector.setAccount(googleAccount);
-                JSONConstructor.writeToFile(null, this);
-                finish();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                        String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                        requestPermissions(permissions, 100);
+                    }
+                }
+
+                AlertDialog progressDialog = setProgressDialog();
+                progressDialog.show();
+
+                DriveConnector.getInstance().getSavedFileContent()
+                        .addOnSuccessListener(content -> {
+                            Log.i("DriveConnector", "Successfully got file content from Drive.");
+                            AlertDialog ad = new AlertDialog.Builder(this).create();
+                            ad.setTitle(getString(R.string.app_name));
+                            ad.setMessage(getString(R.string.import_data));
+                            ad.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), (dialog, which) -> {
+                                // TODO IMPORT DATA
+                                JSONConstructor.writeToFile(content, this);
+                                finish();
+                            });
+                            ad.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), (dialog, which) -> {
+                                // delete data from cloud and make new file
+                                JSONConstructor.writeToFile(null, this);
+                                finish();
+                            });
+                            ad.show();
+                            progressDialog.dismiss();
+                        }).addOnFailureListener(e -> {
+                            JSONConstructor.writeToFile(null, this);
+                            Log.e("DriveConnector", "File not available");
+                            progressDialog.dismiss();
+                            finish();
+                        });
+
             })
             .addOnFailureListener(exception -> Log.e("GotIdea", "Unable to sign in.", exception));
     }
@@ -96,8 +115,16 @@ public class LoginActivity extends AppCompatActivity {
             case DriveConnector.REQUEST_CODE_SIGN_IN:
                 if (resultCode == Activity.RESULT_OK && resultData != null)
                     handleSignInResult(resultData);
+                else
+                    Log.e("GotIdea", "Sign in failed.");
                 break;
         }
         super.onActivityResult(requestCode, resultCode, resultData);
+    }
+    public AlertDialog setProgressDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);   // user can't cancel it
+        builder.setView(R.layout.layout_loading_dialog);
+        return builder.create();
     }
 }

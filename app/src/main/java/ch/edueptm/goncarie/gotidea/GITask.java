@@ -18,6 +18,7 @@ public class GITask {
     // Max characters for certain values
     public static final int MAX_TITLE_LENGTH = 100;
     public static final int MAX_DESCRIPTION_LENGTH = 1000;
+    public static final String INTENT_EXTRA_TASKID = "taskId";
     /**
      * GITask's id
      */
@@ -34,7 +35,7 @@ public class GITask {
      * Tells if the task is done or not
      * If the task is done, it will be archived (shown in the archives page)
      */
-    private boolean archived = false;
+    private boolean isarchived = false;
     /**
      * Creation date time in UTC
      */
@@ -61,15 +62,14 @@ public class GITask {
     public String getTitle() {
         return title;
     }
-    public boolean setTitle(String title) {
+    public void setTitle(String title) {
         if (title.length() <= MAX_TITLE_LENGTH) {
             if (!title.equals("")) this.title = title;
             else this.title = context.getString(R.string.newTask);
             onChanged();
-            return true;
+            return;
         }
         Toast.makeText(context, context.getString(R.string.valueTooLong), Toast.LENGTH_SHORT).show();
-        return false;
     }
     public String getDescription() {
         return description;
@@ -93,12 +93,12 @@ public class GITask {
     public ZonedDateTime getCreationDate() {
         return creationDate;
     }
-    public void setArchived(boolean archived) {
-        this.archived = archived;
+    public void setIsArchived(boolean archived) {
+        this.isarchived = archived;
         onChanged();
     }
-    public boolean getArchived() {
-        return archived;
+    public boolean isArchived() {
+        return isarchived;
     }
     private void onChanged() {
         this.lastChangeDate = ZonedDateTime.now(Clock.systemUTC());
@@ -109,7 +109,7 @@ public class GITask {
             json.put("id", this.id);
             json.put("title", this.getTitle());
             json.put("description", this.getDescription());
-            json.put("archived", this.archived);
+            json.put("archived", this.isarchived);
             json.put("lastchangedate", this.getLastChangeDate());
             json.put("creationdate", this.creationDate);
         } catch(JSONException e) {
@@ -129,7 +129,7 @@ public class GITask {
             this.id = json.getString("id");
             this.setTitle(json.getString("title"));
             this.setDescription(json.getString("description"));
-            this.setArchived(json.getBoolean("archived"));
+            this.setIsArchived(json.getBoolean("archived"));
             this.setLastChangeDate(ZonedDateTime.parse(json.getString("lastchangedate")));
             this.creationDate = ZonedDateTime.parse(json.getString("creationdate"));
 

@@ -15,9 +15,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.SignInButton;
+import com.google.android.gms.tasks.Task;
 import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.FileList;
 
 import org.w3c.dom.Text;
+
+import java.util.Arrays;
 
 public class SettingsActivity extends AppCompatActivity {
     DriveConnector driveConnector;
@@ -51,7 +56,7 @@ public class SettingsActivity extends AppCompatActivity {
             });
         } else {
             loggedin.setVisibility(View.VISIBLE);
-            loggedin.setText(driveConnector.getAccount().getId() + " (" + driveConnector.getAccount().getEmail() + ")");
+            loggedin.setText(getString(R.string.settings_connectedAs) + "\n" + driveConnector.getAccount().getEmail());
         }
         // Max number of characters (title + description)
         // NOT EDITABLE BY USER

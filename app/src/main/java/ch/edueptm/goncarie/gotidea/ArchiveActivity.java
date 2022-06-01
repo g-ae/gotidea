@@ -42,7 +42,7 @@ public class ArchiveActivity extends AppCompatActivity {
             int archivedTasks = 0;
             for (int i = 0; i < tasks.length(); i++) {
                 GITask t = new GITask(tasks.getJSONObject(i));
-                if (t.getArchived()) {
+                if (t.isArchived()) {
                     archivedTasks++;
                     View child = getLayoutInflater().inflate(R.layout.task_row, layout, false);
                     CheckBox cb = child.findViewById(R.id.cbComplete);
@@ -59,7 +59,7 @@ public class ArchiveActivity extends AppCompatActivity {
 
                     child.setOnClickListener(v -> {
                         Intent intent = new Intent(this, TaskActivity.class);
-                        intent.putExtra("taskId", t.getId());
+                        intent.putExtra(GITask.INTENT_EXTRA_TASKID, t.getId());
                         intent.putExtra(TaskActivity.INTENT_EXTRA_ISARCHIVED, true);
                         startActivityForResult(intent, GITask.NO_REQUEST);
                     });
@@ -85,7 +85,7 @@ public class ArchiveActivity extends AppCompatActivity {
     }
     private void restoreTask(String id) {
         GITask t = GITask.findFromId(id, this);
-        t.setArchived(false);
+        t.setIsArchived(false);
         JSONConstructor.saveTask(t, this);
         updateLayout();
         Snackbar.make(findViewById(R.id.archive_task_list), getString(R.string.task_restored) , Snackbar.LENGTH_SHORT).show();
