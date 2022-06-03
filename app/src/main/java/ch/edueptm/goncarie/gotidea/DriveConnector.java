@@ -15,8 +15,6 @@ import com.google.android.gms.tasks.Tasks;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.http.FileContent;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpResponse;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
@@ -47,7 +45,6 @@ public class DriveConnector implements Serializable {
     private final Executor mExecutor = Executors.newSingleThreadExecutor();
     private final Drive mDriveService;
     private final Context context;
-    private final GoogleAccountCredential credential;
     private GoogleSignInAccount account;
     private String saveFileId;
     private String saveFileContent;
@@ -65,25 +62,22 @@ public class DriveConnector implements Serializable {
                 credential
         ).setApplicationName(context.getString(R.string.app_name))
                 .build();
-        setInstance(googleDriveService, credential, context);
+        setInstance(googleDriveService, context);
         DriveConnector.getInstance().setAccount(account);
     }
-    public static DriveConnector setInstance(Drive driveService, GoogleAccountCredential credential, Context context) {
-        instance = new DriveConnector(driveService, credential, context);
-        return instance;
+    public static void setInstance(Drive driveService, Context context) {
+        instance = new DriveConnector(driveService, context);
     }
     public static DriveConnector getInstance() {
         return instance;
     }
-    private DriveConnector(Drive driveService, GoogleAccountCredential credential, Context context) {
+    private DriveConnector(Drive driveService, Context context) {
         mDriveService = driveService;
-        this.credential = credential;
         this.context = context;
     }
-    public GoogleAccountCredential getCredential() { return credential; }
     public static boolean isConnectedToDrive(Context context) {
         try {
-            return (boolean) JSONConstructor.getAttribute(context, JSON_KEY_CONNECTED_DRIVE);
+            return (boolean) JSONConstructor.getAttribute(JSON_KEY_CONNECTED_DRIVE, context);
         } catch (NullPointerException e) {
             return false;
         }
@@ -157,16 +151,20 @@ public class DriveConnector implements Serializable {
     private void createFile() {
         Tasks.call(mExecutor, () -> {
             try {
-                java.io.File file = new java.io.File(context.getFilesDir(), context.getString(R.string.saveFileName));
-                File content = new File()
-                        .setName(DRIVE_FILE_NAME)
-                        .setMimeType(DRIVE_FILE_MIME_TYPE);
+                // verifies that there is not a save file already created
+                if (mDriveService.files().list().setQ("name = '" + DRIVE_FILE_NAME + "'").execute().getFiles().size() == 0) {
+                    java.io.File file = new java.io.File(context.getFilesDir(), context.getString(R.string.saveFileName));
+                    File content = new File()
+                            .setName(DRIVE_FILE_NAME)
+                            .setMimeType(DRIVE_FILE_MIME_TYPE);
 
-                return mDriveService.files().create(content, new FileContent(DRIVE_FILE_MIME_TYPE, file))
-                        .execute();
+                    return mDriveService.files().create(content, new FileContent(DRIVE_FILE_MIME_TYPE, file))
+                            .execute();
+                } else {
+                    throw new IOException("File already exists.");
+                }
             } catch (IOException e) {
-                e.printStackTrace();
-                return null;
+                throw e;
             }
         }).addOnSuccessListener(file -> {
             Log.d("DriveConnector", "File created successfully");

@@ -52,7 +52,6 @@ public class SettingsActivity extends AppCompatActivity {
         if (driveConnector == null) {
             login.setVisibility(View.VISIBLE);
             login.setOnClickListener(v -> {
-                Intent log = new Intent(this, LoginActivity.class);
             });
         } else {
             loggedin.setVisibility(View.VISIBLE);
@@ -67,8 +66,8 @@ public class SettingsActivity extends AppCompatActivity {
         // show a dialog to confirm the deletion
         AlertDialog ad = new AlertDialog.Builder(this).create();
         ad.setOnShowListener(adInterface -> {
-            ad.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.light_gray));
-            ad.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.neon_red));
+            ad.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.light_gray, null));
+            ad.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.neon_red, null));
         });
         ad.setTitle(getString(R.string.delete_all_data));
         ad.setMessage(getString(R.string.deleteAllDataMessage));

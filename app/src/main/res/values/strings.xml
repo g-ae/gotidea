@@ -4,7 +4,6 @@
     <string name="version" translatable="false">0.0</string>
 
     <string name="btnGetStarted">Get started !</string>
-    <!-- Tasks -->
     <string name="newTask">New task (click to edit)</string>
     <string name="task_error_cantsave">Couldn\'t save task. Check console.</string>
     <string name="taskNoSaveTitle">Task</string>
@@ -21,7 +20,6 @@
     <string name="taskDeleted">Task deleted.</string>
     <string name="task_not_found">Task not found.</string>
     <string name="no_tasks">No tasks were found. Get started by clicking the "+" button on the bottom right of your screen !</string>
-    <!-- Login -->
     <string name="continueWithoutGoogle">Continue without logging to Google\n(Your data will be saved on your device)</string>
     <string name="loginWithGoogleNotAvailable">Signing with Google is not available for now.</string>
     <string name="loginWithoutGoogle">All files will be saved in your device for now.</string>

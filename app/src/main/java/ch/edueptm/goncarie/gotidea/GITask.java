@@ -16,8 +16,9 @@ public class GITask {
     public static final int NO_REQUEST = 0;
     public static final int ARCHIVE_REQUEST = 1;
     // Max characters for certain values
-    public static final int MAX_TITLE_LENGTH = 100;
-    public static final int MAX_DESCRIPTION_LENGTH = 1000;
+    public static final int MAX_TITLE_LENGTH = 250;
+    public static final int MAX_DESCRIPTION_LENGTH = 750;
+    // Used for intent
     public static final String INTENT_EXTRA_TASKID = "taskId";
     /**
      * GITask's id
@@ -113,7 +114,7 @@ public class GITask {
             json.put("lastchangedate", this.getLastChangeDate());
             json.put("creationdate", this.creationDate);
         } catch(JSONException e) {
-            Log.i("GITask.ERROR", "Could not set info in JSON.");
+            Log.d("GITask", "Could not set info in JSON.", e);
         }
         return json;
     }

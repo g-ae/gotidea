@@ -18,7 +18,6 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 public class TaskActivity extends AppCompatActivity {
-    // TODO on save button click, disable it because the task's saved
     public static String INTENT_EXTRA_ISARCHIVED = "isarchived";
 
     String id;
@@ -122,6 +121,11 @@ public class TaskActivity extends AppCompatActivity {
             AlertDialog ad = new AlertDialog.Builder(this).create();
             ad.setTitle(getString(R.string.taskNoSaveTitle));
             ad.setMessage(getString(R.string.taskNoSaveMessage));
+            ad.setOnShowListener(adInterface -> {
+                ad.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getColor(R.color.light_gray));
+                ad.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.light_gray));
+                ad.getButton(AlertDialog.BUTTON_NEUTRAL).setTextColor(getColor(R.color.light_gray));
+            });
             ad.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.save), (dialog, which) -> {
                 // Save
                 Toast.makeText(this, getString(R.string.taskSavedChanges), Toast.LENGTH_SHORT).show();
@@ -211,13 +215,19 @@ public class TaskActivity extends AppCompatActivity {
             savedTitle = title;
             t.setTitle(title);
         }
-        else Toast.makeText(this, R.string.taskTitleTooLong, Toast.LENGTH_SHORT).show();
+        else  {
+            Toast.makeText(this, R.string.taskTitleTooLong, Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         if (description.length() <= GITask.MAX_DESCRIPTION_LENGTH) {
             savedDescription = description;
             t.setDescription(description);
         }
-        else Toast.makeText(this, R.string.taskDescriptionTooLong, Toast.LENGTH_SHORT).show();
+        else  {
+            Toast.makeText(this, R.string.taskDescriptionTooLong, Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         // Save in activity variables (to check if changes have been saved)
         savedChanges = true;
@@ -229,12 +239,14 @@ public class TaskActivity extends AppCompatActivity {
         // Verifies if any value has been changed
         // if nothing was changed, no need to save.
         if (!savedChanges) saveChanges();
+        checkSaved();
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         // only inflates if the task is not archived
         if (!extra_isarchived) getMenuInflater().inflate(R.menu.task_address_list, menu);
+        else getMenuInflater().inflate(R.menu.archive_address_list, menu);
         return true;
     }
 }

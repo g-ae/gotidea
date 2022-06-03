@@ -27,10 +27,16 @@ import java.time.ZonedDateTime;
  * JSONConstructor is a static class used to handle the interaction between the application and the JSON save file.
  */
 public class JSONConstructor {
+    /**
+     * Clé de valeur de la liste de tâches dans le fichier JSON
+     */
     public static final String KEY_ARRAY_TASKS = "tasks";
+    /**
+     * Clé de valeur de la dernière fois où le fichier a été modifié
+     */
     public static final String KEY_LAST_UPDATE = "lastUpdate";
     /**
-     * This method checaks if the save file exists. (name of file: R.string.saveFileName)
+     * This method checks if the save file exists. (name of file: R.string.saveFileName)
      * @param context activity context
      * @return true if the file exists, false if not.
      */
@@ -45,7 +51,7 @@ public class JSONConstructor {
         }
         try {
             // if the file exists, close the InputStream
-            // if the file doesn't exist, the program will be out of this method already.
+            // if the file doesn't exist, the program will be out of this function already.
             inputStream.close();
         }
         catch(IOException e) {
@@ -58,9 +64,9 @@ public class JSONConstructor {
      * @param data data to write (JSONObject as a string)
      * @param context activity context
      */
-    public static void writeToFile(String data, Context context) {
+    public static void writeToFile(@Nullable String data, Context context) {
         // if no data was given, create some dummy data
-        if (data == null) data = JSONConstructor.createData(null, context).toString();
+        if (data == null) data = JSONConstructor.createData(null).toString();
         try {
             // write data to save file
             OutputStreamWriter osw = new OutputStreamWriter(context.openFileOutput(context.getString(R.string.saveFileName), Context.MODE_PRIVATE));
@@ -93,35 +99,15 @@ public class JSONConstructor {
         }
         catch (FileNotFoundException e) {
             Log.e("JSONConnector", "File not found: " + e.getMessage());
-        } catch (IOException e) {
-            Log.e("JSONConnector", "Can not read file: " + e.getMessage());
         }
         return ret;
     }
     /**
      * Builds a JSONObject ready to be inserted in the savefile.
-     * example of the JSONObject:
-     * {
-     *     "lastUpdate": "datetime",
-     *     "connectedToDrive": "true/false",
-     *     "tasks": [
-     *         // array of tasks
-     *         {
-     *             "id": "id",
-     *             "title": "title",
-     *             "description": "description",
-     *             "archived": "false",
-     *             "lastchangedate": "date",
-     *             "creationdate": "date"
-     *         },
-     *         ...
-     *     ]
-     * }
      * @param tasks JSONArray containing all the tasks (each JSONArray contains a JSONObject of GITask.getJSON()).
-     * @param context context
      * @return JSONObject ready to be inserted in the savefile.
      */
-    public static JSONObject createData(@Nullable JSONArray tasks, Context context) {
+    public static JSONObject createData(@Nullable JSONArray tasks) {
         JSONObject json = new JSONObject();
         JSONArray jsontasks;
         if (tasks == null) {
@@ -158,7 +144,7 @@ public class JSONConstructor {
             if (i == index) tasksnew.put(task.getJSON());
             else tasksnew.put(tasks.getJSONObject(i));
         }
-        JSONConstructor.writeToFile(JSONConstructor.createData(tasksnew, context).toString(), context);
+        JSONConstructor.writeToFile(JSONConstructor.createData(tasksnew).toString(), context);
         } catch (JSONException e) {
             Toast.makeText(context, context.getString(R.string.task_error_cantsave), Toast.LENGTH_SHORT).show();
             Log.e("JSONConnector", "Failed to save task." + e.getMessage());
@@ -181,7 +167,7 @@ public class JSONConstructor {
                 try {
                     JSONArray tasks = new JSONObject(JSONConstructor.readFromFile(context.getString(R.string.saveFileName), context)).getJSONArray(KEY_ARRAY_TASKS);
                     tasks.put(GITask.getBaseTask(context).getJSON());
-                    JSONConstructor.writeToFile(JSONConstructor.createData(tasks, context).toString(), context);
+                    JSONConstructor.writeToFile(JSONConstructor.createData(tasks).toString(), context);
                 } catch(JSONException e) {
                     Log.e("JSONConnector", "JSON file couldn't be read : " + e.getMessage());
                     JSONConstructor.writeToFile(null, context);
@@ -224,11 +210,11 @@ public class JSONConstructor {
      * @param context activity context
      * @return true if the file is usable, false otherwise
      */
-    public static boolean checkIsSaveFileUsable(Context context) {
+    public static boolean checkIfDataIsUsableAsSaveFile(String data) {
         try {
-            JSONObject json = new JSONObject(JSONConstructor.readFromFile(context.getString(R.string.saveFileName), context));
+            JSONObject json = new JSONObject(data);
             json.getString(KEY_LAST_UPDATE);
-            json.getString("date");
+            json.getString(DriveConnector.JSON_KEY_CONNECTED_DRIVE);
             json.getJSONArray(KEY_ARRAY_TASKS);
             return true;
         } catch (JSONException e) {
@@ -242,8 +228,7 @@ public class JSONConstructor {
      * @param context activity context
      */
     public static void deleteAllData(Context context) {
-        DriveConnector driveConnector = DriveConnector.getInstance();
-        if (DriveConnector.isConnectedToDrive(context)) driveConnector.deleteAll();
+        if (DriveConnector.isConnectedToDrive(context)) DriveConnector.getInstance().deleteAll();
         try {
             File file = new File(context.getFilesDir(), context.getString(R.string.saveFileName));
             file.delete();
@@ -252,7 +237,7 @@ public class JSONConstructor {
         }
     }
 
-    public static Object getAttribute(Context context, String attribute) {
+    public static Object getAttribute(String attribute, Context context){
         try {
             JSONObject json = new JSONObject(JSONConstructor.readFromFile(context.getString(R.string.saveFileName), context));
             return json.get(attribute);

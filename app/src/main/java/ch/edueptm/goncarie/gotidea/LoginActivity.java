@@ -70,11 +70,9 @@ public class LoginActivity extends AppCompatActivity {
                 // Use the authenticated account to sign in to the Drive service.
                 DriveConnector.setInstance(this, googleAccount);
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
-                        String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
-                        requestPermissions(permissions, 100);
-                    }
+                if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                    String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                    requestPermissions(permissions, 100);
                 }
 
                 AlertDialog progressDialog = setProgressDialog();
@@ -87,7 +85,6 @@ public class LoginActivity extends AppCompatActivity {
                             ad.setTitle(getString(R.string.app_name));
                             ad.setMessage(getString(R.string.import_data));
                             ad.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), (dialog, which) -> {
-                                // TODO IMPORT DATA
                                 JSONConstructor.writeToFile(content, this);
                                 finish();
                             });
