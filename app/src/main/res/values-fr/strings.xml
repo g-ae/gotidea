@@ -6,7 +6,7 @@
     <!-- Tasks -->
     <string name="newTask">Nouvelle tâche (cliquez pour éditer)</string>
     <!-- Login -->
-    <string name="continueWithoutGoogle">Continuer sans se connecter à Google\n(Vos données seront sauvegardées dans votre appareil)</string>
+    <string name="continueWithoutGoogle">Continuer sans se connecter à Google</string>
     <string name="loginWithGoogleNotAvailable">La connexion avec Google n\'est pas disponible pour l\'instant</string>
     <string name="loginWithoutGoogle">Toutes les données seront sauvegardées dans votre appareil.</string>
     <string name="taskNoSaveTitle">Tâche</string>
@@ -41,4 +41,11 @@
     <string name="characters">charactères</string>
     <string name="max_title_length">Longueur maximale du titre</string>
     <string name="max_description_length">Longueur maximale de la description</string>
+    <string name="taskTitleTooLong">Le titre est trop long !</string>
+    <string name="taskDescriptionTooLong">La description est trop longue !</string>
+    <string name="settings_connectedAs">Connecté en tant que</string>
+    <string name="import_data">Vous avez des données à récupérer depuis votre Google Drive. Voulez-vous les récupérer ?</string>
+    <string name="yes">Oui</string>
+    <string name="no">Non</string>
+    <string name="please_wait">Patientez quelques secondes...</string>
 </resources>

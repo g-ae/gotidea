@@ -16,6 +16,7 @@ import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.http.FileContent;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.util.DateTime;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
@@ -23,8 +24,11 @@ import com.google.api.services.drive.model.File;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -47,7 +51,7 @@ public class DriveConnector implements Serializable {
     private final Context context;
     private GoogleSignInAccount account;
     private String saveFileId;
-    private String saveFileContent;
+    private String saveFileContent = "";
 
     public static void setInstance(Context context, GoogleSignInAccount account) {
         GoogleAccountCredential credential =
@@ -62,11 +66,8 @@ public class DriveConnector implements Serializable {
                 credential
         ).setApplicationName(context.getString(R.string.app_name))
                 .build();
-        setInstance(googleDriveService, context);
-        DriveConnector.getInstance().setAccount(account);
-    }
-    public static void setInstance(Drive driveService, Context context) {
-        instance = new DriveConnector(driveService, context);
+        instance = new DriveConnector(googleDriveService, context);
+        instance.setAccount(account);
     }
     public static DriveConnector getInstance() {
         return instance;
@@ -94,7 +95,7 @@ public class DriveConnector implements Serializable {
         try {
             acc = new JSONObject();
             acc.put("id", account.getId());
-            if (saveFileId != "") acc.put("saveFileId", saveFileId);
+            if (!Objects.equals(saveFileId, "")) acc.put("saveFileId", saveFileId);
         } catch (JSONException e) {
             e.printStackTrace();
             acc = null;
@@ -199,19 +200,54 @@ public class DriveConnector implements Serializable {
             e.printStackTrace();
         });
     }
-    public Task<String> getSavedFileContent() {
-        Log.i("DriveConnector", "Downloading file from Google Drive");
+    public Task<String> getNewestFileContent() {
         return Tasks.call(mExecutor, () -> {
-            saveFileId = mDriveService.files().list().setQ("name = '" + DRIVE_FILE_NAME + "'").execute().getFiles().get(0).getId();
-            InputStream is = mDriveService.files().get(saveFileId).setAlt("media").executeMediaAsInputStream();
+            File lastUpdatedFile = null;
+            List<File> lf = mDriveService.files().list().setQ("name = '" + DRIVE_FILE_NAME + "'").execute().getFiles();
+            for (File f : lf) {
+                if (lf.get(0) == f) lastUpdatedFile = f;
+                else {
+                    DateTime tempsAct = f.getModifiedTime();
+                    DateTime tempsNew = lastUpdatedFile.getModifiedTime();
+
+                    if (tempsAct.getValue() - tempsNew.getValue() >= 0) {
+                        lastUpdatedFile = f;
+                    }
+                }
+            }
+            Log.e("GOTIDEA", lastUpdatedFile.getId());
+            getFileContent(lastUpdatedFile.getId())
+                    .addOnSuccessListener(content -> {
+                        this.saveFileContent = content;
+                    })
+                    .addOnFailureListener(Throwable::printStackTrace)
+                    .addOnCanceledListener(() -> {
+                        Log.e("gidbg", "ERROR get file content cancelled");
+                    });
+            Thread.sleep(4000);
+            return saveFileContent;
+        });
+    }
+    public Task<String> getFileContent(String id) {
+        return Tasks.call(mExecutor, () -> {
+            List<File> fl = mDriveService.files().list().setQ("name = '" + DRIVE_FILE_NAME + "'").execute().getFiles();
+            Log.e("gidbg", String.valueOf(fl));
+            File f = null;
+            for (File file : fl) if (Objects.equals(file.getId(), id)) f = file;
+            if (f == null) return null;
+            InputStream is = mDriveService.files().get(f.getId()).setAlt("media").executeMediaAsInputStream();
 
             String ret = "";
             if (is != null) {
                 ret = JSONConstructor.readInputStream(is);
             }
-            saveFileContent = ret;
-            return saveFileContent;
+            Log.e("gidbg_ret", ret);
+            return ret;
         });
+    }
+
+    public String getSaveFileContent() {
+        return saveFileContent;
     }
 }
 

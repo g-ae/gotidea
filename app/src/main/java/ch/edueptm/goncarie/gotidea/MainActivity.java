@@ -3,6 +3,7 @@ package ch.edueptm.goncarie.gotidea;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -33,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ((FloatingActionButton)findViewById(R.id.fab)).setImageDrawable(getDrawable(R.drawable.ic_action_content_new));
+        ((FloatingActionButton)findViewById(R.id.fab)).setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_action_content_new));
     }
     /**
      * On add task button click
@@ -97,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class));
         } else if (driveConnector == null && DriveConnector.isConnectedToDrive(this)) {
             DriveConnector.setInstance(this, GoogleSignIn.getLastSignedInAccount(this));
+
         }
 
         // add tasks to scrollview

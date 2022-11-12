@@ -22,6 +22,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.time.Clock;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
+import java.util.Objects;
 
 /**
  * JSONConstructor is a static class used to handle the interaction between the application and the JSON save file.
@@ -66,7 +69,7 @@ public class JSONConstructor {
      */
     public static void writeToFile(@Nullable String data, Context context) {
         // if no data was given, create some dummy data
-        if (data == null) data = JSONConstructor.createData(null).toString();
+        if (data == null || Objects.equals(data, "")) data = JSONConstructor.createData(null).toString();
         try {
             // write data to save file
             OutputStreamWriter osw = new OutputStreamWriter(context.openFileOutput(context.getString(R.string.saveFileName), Context.MODE_PRIVATE));
@@ -207,7 +210,6 @@ public class JSONConstructor {
 
     /**
      * Reads the save file and checks if it is usable.
-     * @param context activity context
      * @return true if the file is usable, false otherwise
      */
     public static boolean checkIfDataIsUsableAsSaveFile(String data) {
@@ -242,7 +244,7 @@ public class JSONConstructor {
             JSONObject json = new JSONObject(JSONConstructor.readFromFile(context.getString(R.string.saveFileName), context));
             return json.get(attribute);
         } catch (JSONException e) {
-            Log.e("JSONConnector", "Couldn't get attribute");
+            Log.e("JSONConnector", "Couldn't get attribute " + attribute);
             return null;
         }
     }
@@ -264,5 +266,34 @@ public class JSONConstructor {
             Log.e("JSONConnector", "Couldn't read input stream");
             return null;
         }
+    }
+    public static int whichIsNewer(String first, String second) {
+        JSONObject firstj = null;
+        JSONObject secondj = null;
+        ZonedDateTime driveTime = null;
+        ZonedDateTime localTime = null;
+        try {
+            firstj = new JSONObject(first);
+
+            driveTime = (ZonedDateTime) firstj.get(JSONConstructor.KEY_LAST_UPDATE);
+        } catch (JSONException ignored) {
+        }
+        try {
+            secondj = new JSONObject(second);
+
+            localTime = (ZonedDateTime) secondj.get(JSONConstructor.KEY_LAST_UPDATE);
+        } catch (JSONException ignored) {
+        }
+        try {
+            if (firstj == null || secondj == null) {
+                assert secondj != null;
+                secondj.get(JSONConstructor.KEY_LAST_UPDATE);
+                return 2;
+            }
+        } catch (JSONException | AssertionError e) {
+            e.printStackTrace();
+            return 1;
+        }
+        return driveTime.until(localTime, ChronoUnit.SECONDS) >= 1 ? 1 : 2;
     }
 }

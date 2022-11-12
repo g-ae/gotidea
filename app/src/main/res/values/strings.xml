@@ -20,7 +20,7 @@
     <string name="taskDeleted">Task deleted.</string>
     <string name="task_not_found">Task not found.</string>
     <string name="no_tasks">No tasks were found. Get started by clicking the "+" button on the bottom right of your screen !</string>
-    <string name="continueWithoutGoogle">Continue without logging to Google\n(Your data will be saved on your device)</string>
+    <string name="continueWithoutGoogle">Continue without logging to Google</string>
     <string name="loginWithGoogleNotAvailable">Signing with Google is not available for now.</string>
     <string name="loginWithoutGoogle">All files will be saved in your device for now.</string>
     <string name="valueTooLong">One of the values is too long.</string>

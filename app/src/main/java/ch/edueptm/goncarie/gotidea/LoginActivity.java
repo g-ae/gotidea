@@ -22,6 +22,8 @@ import com.google.api.services.drive.DriveScopes;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.time.ZonedDateTime;
+
 public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,9 +55,9 @@ public class LoginActivity extends AppCompatActivity {
     public void signInWithGoogle() {
         GoogleSignInOptions signInOptions =
                 new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestEmail()
-                        .requestScopes(new Scope(DriveScopes.DRIVE_FILE))
-                        .build();
+                    .requestEmail()
+                    .requestScopes(new Scope(DriveScopes.DRIVE_FILE))
+                    .build();
         GoogleSignInClient client = GoogleSignIn.getClient(this, signInOptions);
 
         // The result of the sign-in Intent is handled in onActivityResult.
@@ -70,47 +72,62 @@ public class LoginActivity extends AppCompatActivity {
                 // Use the authenticated account to sign in to the Drive service.
                 DriveConnector.setInstance(this, googleAccount);
 
-                if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
-                    String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
-                    requestPermissions(permissions, 100);
-                }
-
                 AlertDialog progressDialog = setProgressDialog();
                 progressDialog.show();
 
-                DriveConnector.getInstance().getSavedFileContent()
+                DriveConnector.getInstance().getNewestFileContent()
                         .addOnSuccessListener(content -> {
-                            Log.i("DriveConnector", "Successfully got file content from Drive.");
-                            AlertDialog ad = new AlertDialog.Builder(this).create();
-                            ad.setTitle(getString(R.string.app_name));
-                            ad.setMessage(getString(R.string.import_data));
-                            ad.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), (dialog, which) -> {
-                                JSONConstructor.writeToFile(content, this);
+                            boolean isDriveNewer;
+                            if (JSONConstructor.saveFileExists(this))
+                                isDriveNewer = JSONConstructor.whichIsNewer(content, JSONConstructor.readFromFile(getString(R.string.saveFileName), this)) == 1;
+                            else isDriveNewer = true;
+
+                            if (isDriveNewer) {
+                                if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                                    String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                                    requestPermissions(permissions, 100);
+                                }
+                                Log.i("DriveConnector", "Successfully got file content from Drive.");
+                                AlertDialog ad = new AlertDialog.Builder(this).create();
+                                ad.setTitle(getString(R.string.app_name));
+                                ad.setMessage(getString(R.string.import_data));
+                                ad.setOnShowListener(adInterface -> {
+                                    ad.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getColor(R.color.light_gray));
+                                    ad.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.light_gray));
+                                });
+                                ad.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.yes), (dialog, which) -> {
+                                    JSONConstructor.writeToFile(DriveConnector.getInstance().getSaveFileContent(), this);
+                                    finish();
+                                });
+                                ad.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), (dialog, which) -> {
+                                    // delete data from cloud and make new file
+                                    JSONConstructor.writeToFile(null, this);
+                                    finish();
+                                });
+                                ad.show();
+                                progressDialog.dismiss();
+                            } else {
+                                JSONConstructor.writeToFile(JSONConstructor.readFromFile(getString(R.string.saveFileName), this), this);
+                                progressDialog.dismiss();
                                 finish();
-                            });
-                            ad.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.no), (dialog, which) -> {
-                                // delete data from cloud and make new file
-                                JSONConstructor.writeToFile(null, this);
-                                finish();
-                            });
-                            ad.show();
-                            progressDialog.dismiss();
+                            }
                         }).addOnFailureListener(e -> {
+                            e.printStackTrace();
                             JSONConstructor.writeToFile(null, this);
                             Log.e("DriveConnector", "File not available");
+                            Log.e("DriveConnector", e.getMessage());
                             progressDialog.dismiss();
                             finish();
                         });
-
-            })
-            .addOnFailureListener(exception -> Log.e("GotIdea", "Unable to sign in.", exception));
+                })
+                .addOnFailureListener(exception -> Log.e("GotIdea", "Unable to sign in.", exception));
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
         switch (requestCode) {
             case DriveConnector.REQUEST_CODE_SIGN_IN:
-                if (resultCode == Activity.RESULT_OK && resultData != null)
+                if (resultCode == Activity.RESULT_OK)
                     handleSignInResult(resultData);
                 else
                     Log.e("GotIdea", "Sign in failed.");

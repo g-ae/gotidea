@@ -87,10 +87,6 @@ public class GITask {
     public ZonedDateTime getLastChangeDate() {
         return lastChangeDate;
     }
-    private void setLastChangeDate(ZonedDateTime zdt) {
-        this.lastChangeDate = zdt;
-        onChanged();
-    }
     public ZonedDateTime getCreationDate() {
         return creationDate;
     }
@@ -118,21 +114,14 @@ public class GITask {
         }
         return json;
     }
-    public void setFromJSON(String str) {
-        try {
-            setFromJSON(new JSONObject(str));
-        } catch(JSONException e) {
-            Log.e("ERROR", "Couldn't set JSON from str value");
-        }
-    }
     public void setFromJSON(JSONObject json) {
         try {
             this.id = json.getString("id");
             this.setTitle(json.getString("title"));
             this.setDescription(json.getString("description"));
             this.setIsArchived(json.getBoolean("archived"));
-            this.setLastChangeDate(ZonedDateTime.parse(json.getString("lastchangedate")));
             this.creationDate = ZonedDateTime.parse(json.getString("creationdate"));
+            onChanged();
 
         } catch(JSONException e) {
             Log.e("ERROR", "Couldn't set JSON from JSONObject");
@@ -140,15 +129,6 @@ public class GITask {
     }
     public static GITask getBaseTask(Context context) {
         return new GITask("", "", context);
-    }
-    public static GITask getTaskFromIndex(int index, Context context) {
-        try {
-            JSONArray array = new JSONObject(JSONConstructor.readFromFile(context.getString(R.string.saveFileName), context)).getJSONArray("tasks");
-            return array.getJSONObject(index).toString().equals("") ? null : new GITask(array.getJSONObject(index));
-        } catch(JSONException e) {
-            Log.e("ERROR", "Couldn't get task from index");
-            return null;
-        }
     }
     public static GITask findFromId(String id, Context context) {
         try {
